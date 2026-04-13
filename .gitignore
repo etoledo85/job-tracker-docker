@@ -1,0 +1,29 @@
+# Credenciales y datos sensibles
+.env
+*.env
+
+# Base de datos local
+data/jobs.db
+
+# CV y documentos personales
+data/cv.pdf
+data/cv_bck.pdf
+data/cover_letters/
+data/tailored_cvs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Logs
+data/scrape.log
+*.log
+
+# Editor
+.vscode/
+.idea/
+*.swp

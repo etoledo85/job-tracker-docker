@@ -1,0 +1,7 @@
+#!/usr/bin/fish
+# Shortcut: ./jt <command>
+# Ejemplo:  ./jt scrape
+#           ./jt list
+#           ./jt apply 3
+set SCRIPT_DIR (dirname (status filename))
+exec $SCRIPT_DIR/.venv/bin/python $SCRIPT_DIR/main.py $argv
