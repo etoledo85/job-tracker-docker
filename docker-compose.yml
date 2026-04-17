@@ -1,0 +1,37 @@
+services:
+  job-tracker:
+    build: .
+    image: job-tracker:latest
+    container_name: job-tracker
+    env_file: .env
+    volumes:
+      - job-tracker-data:/data
+    # Para scrape manual interactivo: docker compose run --rm job-tracker python main.py list
+    restart: "no"
+
+  # Web UI — accesible en http://localhost:8501
+  web:
+    build: .
+    image: job-tracker:latest
+    container_name: job-tracker-web
+    env_file: .env
+    volumes:
+      - job-tracker-data:/data
+    command: streamlit run src/web/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true --client.toolbarMode minimal
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+  # Scheduler interno: corre el scrape diario y se queda escuchando
+  scheduler:
+    build: .
+    image: job-tracker:latest
+    container_name: job-tracker-scheduler
+    env_file: .env
+    volumes:
+      - job-tracker-data:/data
+    command: python scheduler.py
+    restart: unless-stopped
+
+volumes:
+  job-tracker-data:

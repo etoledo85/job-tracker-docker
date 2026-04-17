@@ -3,11 +3,11 @@ Analiza el fit entre el CV del candidato y una vacante específica.
 Genera recomendaciones de tailoring para mejorar el match ATS.
 Genera CVs personalizados por vacante en PDF.
 """
-import os
 import re
 import json
 from pathlib import Path
 from src.config import load_config, get_cv_text
+from src.ai_provider import complete as ai_complete, complete_json as ai_json
 
 
 def analyze_fit(job_title: str, company: str, description: str) -> dict:
@@ -62,32 +62,7 @@ CANDIDATE CV:
 Analyze the fit and return the JSON:"""
 
     try:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if api_key:
-            import anthropic
-            client = anthropic.Anthropic(api_key=api_key)
-            model = cfg.get("anthropic", {}).get("model", "claude-sonnet-4-6")
-            message = client.messages.create(
-                model=model,
-                max_tokens=1500,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_message}]
-            )
-            raw = message.content[0].text.strip()
-        else:
-            import subprocess
-            full_prompt = f"{system_prompt}\n\n{user_message}"
-            result = subprocess.run(
-                ["claude", "--print", "--dangerously-skip-permissions"],
-                input=full_prompt,
-                capture_output=True, text=True, timeout=120,
-                env={**os.environ}
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"claude CLI error: {result.stderr[:300]}")
-            raw = result.stdout.strip()
-            if not raw:
-                raise RuntimeError("claude CLI no devolvió texto")
+        raw = ai_json(system_prompt, user_message, max_tokens=4096)
 
         # Limpiar posible markdown fence
         if raw.startswith("```"):
@@ -106,7 +81,9 @@ Analyze the fit and return the JSON:"""
 # CV PERSONALIZADO
 # ─────────────────────────────────────────────────────────────────────────────
 
-CV_OUTPUT_DIR = Path(__file__).parent.parent / "data" / "tailored_cvs"
+import os as _os
+_cv_data_dir = Path(_os.environ.get("DATA_DIR", Path(__file__).parent.parent / "data"))
+CV_OUTPUT_DIR = _cv_data_dir / "tailored_cvs"
 CV_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -163,34 +140,7 @@ ORIGINAL CV:
 Write the full tailored CV now:"""
 
     try:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if api_key:
-            import anthropic
-            client = anthropic.Anthropic(api_key=api_key)
-            model = cfg.get("anthropic", {}).get("model", "claude-sonnet-4-6")
-            message = client.messages.create(
-                model=model,
-                max_tokens=3000,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_message}]
-            )
-            cv_tailored = message.content[0].text.strip()
-        else:
-            import subprocess
-            full_prompt = f"{system_prompt}\n\n{user_message}"
-            result = subprocess.run(
-                ["claude", "--print", "--dangerously-skip-permissions"],
-                input=full_prompt,
-                capture_output=True, text=True, timeout=180,
-                env={**os.environ}
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"claude CLI error: {result.stderr[:300]}")
-            cv_tailored = result.stdout.strip()
-            if not cv_tailored:
-                raise RuntimeError("claude CLI no devolvió texto")
-    except RuntimeError:
-        raise
+        cv_tailored = ai_complete(system_prompt, user_message, max_tokens=3000)
     except Exception as e:
         raise RuntimeError(f"Error generando CV tailored: {e}")
 

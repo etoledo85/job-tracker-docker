@@ -22,7 +22,7 @@ class RemotiveScraper(BaseScraper):
     def scrape(self) -> List[Job]:
         jobs = []
         seen_urls = set()
-        categories = ["devops-sysadmin"]
+        categories = ["devops"]
 
         for category in categories:
             try:

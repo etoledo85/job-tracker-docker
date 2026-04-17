@@ -32,13 +32,21 @@ def load_config() -> dict:
         cfg["anthropic"] = {}
     if not cfg["anthropic"].get("api_key"):
         cfg["anthropic"]["api_key"] = os.environ.get("ANTHROPIC_API_KEY", "")
+    # Gemini — se lee directo desde os.environ en ai_provider.py, pero lo
+    # exponemos aquí para que load_config() sirva como punto único de diagnóstico
+    if not os.environ.get("GEMINI_API_KEY"):
+        gemini_key = cfg.get("gemini", {}).get("api_key", "")
+        if gemini_key:
+            os.environ["GEMINI_API_KEY"] = gemini_key
 
     return cfg
 
 def get_cv_text() -> str:
     """Extract text from the user's CV PDF."""
     cfg = load_config()
-    cv_path = BASE_DIR / cfg["profile"]["cv_path"]
+    data_dir = Path(os.environ.get("DATA_DIR", BASE_DIR / "data"))
+    cv_filename = Path(cfg["profile"]["cv_path"]).name
+    cv_path = data_dir / cv_filename
 
     if not cv_path.exists():
         return ""

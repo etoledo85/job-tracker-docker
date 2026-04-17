@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 from datetime import datetime
@@ -5,7 +6,8 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 
 BASE_DIR = Path(__file__).parent.parent
-DB_PATH = BASE_DIR / "data" / "jobs.db"
+_data_dir = Path(os.environ.get("DATA_DIR", BASE_DIR / "data"))
+DB_PATH = _data_dir / "jobs.db"
 
 VALID_STATUSES = ["new", "reviewing", "applied", "interview", "rejected", "offer", "discarded"]
 

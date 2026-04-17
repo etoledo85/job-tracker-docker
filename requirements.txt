@@ -1,4 +1,8 @@
 anthropic>=0.89.0
+streamlit>=1.35.0
+google-genai>=1.0.0
+groq>=0.9.0
+openai>=1.0.0
 pyyaml>=6.0.0
 beautifulsoup4>=4.14.0
 lxml>=6.0.0

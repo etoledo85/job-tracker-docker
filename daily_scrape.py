@@ -16,7 +16,7 @@ from src.email_sender import send_self_copy
 
 SOURCES = [
     "remotive", "wwr", "linkedin", "computrabajo", "occ",
-    "remoteok", "himalayas", "getonboard", "hireline",
+    "remoteok", "himalayas", "getonboard", "jobicy", "glassdoor",
 ]
 
 
@@ -36,7 +36,8 @@ def run_scrape(cfg):
     from src.scrapers.remoteok import RemoteOKScraper
     from src.scrapers.himalayas import HimalayasScraper
     from src.scrapers.getonboard import GetOnBoardScraper
-    from src.scrapers.hireline import HirelineScraper
+    from src.scrapers.jobicy import JobicyScraper
+    from src.scrapers.glassdoor import GlassdoorScraper
 
     scrapers_map = {
         "remotive":    RemotiveScraper,
@@ -47,7 +48,8 @@ def run_scrape(cfg):
         "remoteok":    RemoteOKScraper,
         "himalayas":   HimalayasScraper,
         "getonboard":  GetOnBoardScraper,
-        "hireline":    HirelineScraper,
+        "jobicy":      JobicyScraper,
+        "glassdoor":   GlassdoorScraper,
     }
 
     new_jobs = []
@@ -59,7 +61,9 @@ def run_scrape(cfg):
             continue
 
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Scraping {name}...")
-        scraper = ScraperClass(keywords=keywords, locations=locations)
+        # Glassdoor es lento (Playwright por keyword); limitar a keywords principales
+        kw = ["sysadmin", "systems administrator", "linux administrator", "infrastructure engineer"] if name == "glassdoor" else keywords
+        scraper = ScraperClass(keywords=kw, locations=locations)
 
         try:
             jobs = scraper.scrape()

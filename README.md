@@ -1,161 +1,180 @@
 # Job Tracker
 
-Automatiza la búsqueda de trabajo: scraping multi-fuente, análisis ATS con IA, generación de cover letters y CVs personalizados por vacante.
+Automatiza tu búsqueda de trabajo: scraping de 14 bolsas de empleo, análisis ATS con IA, cover letters y CVs personalizados por vacante — todo en un contenedor Docker.
 
-## Características
+## Inicio rápido
 
-- **Scraping** de 9 bolsas de trabajo: LinkedIn, Himalayas, RemoteOK, We Work Remotely, Remotive, Computrabajo, OCC, GetOnBoard, Hireline
-- **Filtros inteligentes**: geográficos, de nivel, de rol y de stack tecnológico para eliminar vacantes irrelevantes antes de guardarlas
-- **Análisis ATS** con Claude — score de match, keywords faltantes, gaps críticos y sugerencias de rewording
-- **Cover letter personalizada** generada con IA en el idioma de la vacante (ES/EN auto-detectado)
-- **CV personalizado por vacante** — aplica rewording ATS sin inventar experiencia
-- **Scrape diario automático** via systemd timer con resumen por email
-- **CLI completa** con Rich para gestionar el pipeline completo desde la terminal
+### 1. Requisitos
 
-## Instalación
+- Docker + Docker Compose
+- Una API key gratuita de IA (elige una):
+  - **OpenRouter** (recomendado) → https://openrouter.ai
+  - **Gemini** → https://aistudio.google.com/app/apikey
+  - **Anthropic** → https://console.anthropic.com/settings/keys
 
-```bash
-git clone https://github.com/etoledo85/job-tracker.git
-cd job-tracker
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-playwright install chromium
-```
-
-Crea el archivo `.env` con tus credenciales:
+### 2. Configuración
 
 ```bash
+git clone <repo>
+cd job-tracker-docker
+
+# Credenciales
 cp .env.example .env
-# Edita .env con tu Gmail App Password y opcionalmente tu Anthropic API key
+# Edita .env con tu API key de IA y opcionalmente Gmail App Password
+
+# Perfil de búsqueda
+# Edita config.yaml con tu nombre, email y keywords de búsqueda
 ```
 
-Inicializa la base de datos:
+### 3. Sube tu CV
 
 ```bash
-python main.py
+mkdir -p data
+cp /ruta/a/tu/cv.pdf data/cv.pdf
 ```
+
+### 4. Levanta el stack
+
+```bash
+docker compose up -d web scheduler
+```
+
+Abre **http://localhost:8501** en tu browser. Listo.
+
+---
+
+## Uso
+
+### Web UI (recomendado)
+
+Abre http://localhost:8501:
+
+| Tab | Función |
+|-----|---------|
+| 💼 Vacantes | Ver, filtrar y gestionar vacantes. Cambiar estado. |
+| 🔍 Scrape | Lanzar scrape manual de las fuentes que elijas. |
+| 🤖 IA | Análisis ATS, generar cover letter y CV personalizado. |
+| ⚙️ Config | Subir CV, ver configuración activa. |
+
+### CLI (opcional)
+
+```bash
+# Scrape manual
+docker compose run --rm job-tracker python main.py scrape
+
+# Ver vacantes
+docker compose run --rm job-tracker python main.py list
+
+# Analizar fit CV vs vacante
+docker compose run --rm job-tracker python main.py tailor <id>
+
+# Generar cover letter
+docker compose run --rm job-tracker python main.py generate <id>
+
+# Ver estadísticas
+docker compose run --rm job-tracker python main.py stats
+```
+
+---
 
 ## Configuración
 
-Edita `config.yaml`:
+### `.env`
+
+```env
+# IA — elige uno (OpenRouter es gratuito sin tarjeta)
+OPENROUTER_API_KEY=sk-or-...
+GEMINI_API_KEY=AIza...
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Email — para recibir resumen diario de vacantes nuevas (opcional)
+GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
+```
+
+Para Gmail App Password: https://myaccount.google.com/apppasswords
+
+### `config.yaml`
 
 ```yaml
 profile:
   name: "Tu Nombre"
   email: "tu@email.com"
+  phone: "+52 ..."
+  cv_path: "data/cv.pdf"
 
 search:
   keywords:
     - "sysadmin"
     - "linux administrator"
-    # ...
+    - "devops engineer"
+    # agrega los roles que buscas
+  locations:
+    - "remote"
+    - "remoto"
+    - "Tu Ciudad"
   remote_preference: true
-  exclude_locations:
-    - "Ciudad de México"
-    # ...
   exclude_keywords:
     - "junior"
-    - "clearance"
-    # ...
+    - "intern"
+    # filtra lo que no te interesa
 ```
 
-Las credenciales van en `.env` (nunca en `config.yaml`):
-
-```env
-GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
-ANTHROPIC_API_KEY=sk-ant-...   # opcional, usa Claude Code si no se define
-```
-
-## Uso
-
-```bash
-# Buscar vacantes en todas las fuentes
-python main.py scrape
-
-# Buscar solo en fuentes específicas
-python main.py scrape --sources linkedin,himalayas,remoteok
-
-# Ver vacantes guardadas
-python main.py list
-python main.py list --status new
-python main.py list --remote
-
-# Ver detalle de una vacante
-python main.py show 42
-
-# Analizar fit CV vs vacante (ATS score)
-python main.py tailor 42
-
-# Generar CV personalizado para la vacante
-python main.py cv 42
-
-# Generar cover letter
-python main.py generate 42
-
-# Generar + enviar cover letter por email
-python main.py apply 42
-
-# Cambiar estado de una vacante
-python main.py status 42 applied
-
-# Estadísticas del pipeline
-python main.py stats
-```
-
-### Estados de vacante
-
-| Estado | Descripción |
-|---|---|
-| `new` | Recién encontrada, sin revisar |
-| `reviewing` | En análisis |
-| `applied` | Aplicación enviada |
-| `interview` | En proceso de entrevistas |
-| `offer` | Oferta recibida |
-| `rejected` | Rechazada |
-| `discarded` | Descartada manualmente |
-
-## Scrape diario automático
-
-Configura el timer de systemd para recibir un email cada mañana con las vacantes nuevas:
-
-```bash
-mkdir -p ~/.config/systemd/user
-# Copia job-tracker.service y job-tracker.timer a ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now job-tracker.timer
-
-# Verificar
-systemctl --user list-timers job-tracker.timer
-```
-
-El email incluye título, empresa, ubicación y fuente de cada vacante nueva que pasa los filtros.
+---
 
 ## Fuentes de scraping
 
 | Fuente | Método | Estado |
-|---|---|---|
-| LinkedIn | Playwright | ✅ Activo |
-| Himalayas | Playwright | ✅ Activo |
-| RemoteOK | Playwright + BS4 | ✅ Activo |
-| We Work Remotely | RSS | ✅ Activo |
-| Remotive | API pública | ✅ Activo |
-| Computrabajo | Playwright + BS4 | ✅ Activo |
-| OCC | Playwright + BS4 | ✅ Activo |
-| GetOnBoard | API pública | ✅ Activo |
-| Hireline | requests + BS4 | ✅ Activo |
+|--------|--------|--------|
+| Remotive | API pública | ✅ |
+| We Work Remotely | RSS | ✅ |
+| RemoteOK | Playwright | ✅ |
+| Himalayas | API + Playwright | ✅ |
+| LinkedIn | Playwright | ✅ |
+| Computrabajo | Playwright | ✅ |
+| OCC | Playwright | ✅ |
+| GetOnBoard | API pública | ✅ |
+| Jobicy | API pública | ✅ |
+| Glassdoor | Playwright | ✅ |
+| Hireline | requests + BS4 | ✅ |
 | Torre | — | ⚠️ Login requerido |
-| Wellfound | — | ⚠️ Anti-bot (DataDome) |
+| Wellfound | — | ⚠️ Anti-bot |
 | InfoJobs | — | ⚠️ CAPTCHA |
-| Honeypot | — | ❌ Plataforma cerrada (2023) |
+
+---
+
+## Proveedores de IA soportados
+
+El sistema detecta automáticamente qué key tienes configurada (prioridad de izquierda a derecha):
+
+```
+GEMINI_API_KEY → OPENROUTER_API_KEY → GROQ_API_KEY → ANTHROPIC_API_KEY
+```
+
+OpenRouter tiene modelos gratuitos con fallback automático entre ellos.
+
+---
 
 ## Stack
 
-- **Python 3.11+**
-- **Claude** (Anthropic) — análisis ATS, cover letters, CV tailoring
-- **Playwright** — scraping de SPAs con JS
-- **BeautifulSoup4 + lxml** — parsing HTML
-- **SQLite** — base de datos local de vacantes
+- **Docker + Playwright/Chromium** — scraping de SPAs
+- **Python 3.12** — backend
+- **SQLite** — base de datos local (persiste en Docker volume)
+- **Streamlit** — Web UI
 - **ReportLab** — generación de PDFs
-- **Rich + Typer** — CLI interactiva
-- **systemd** — automatización del scrape diario
+- **APScheduler-style scheduler** — scrape diario a las 08:00
+
+---
+
+## Estructura de datos
+
+Las vacantes tienen los siguientes estados:
+
+| Estado | Descripción |
+|--------|-------------|
+| `new` | Recién encontrada |
+| `reviewing` | En análisis |
+| `applied` | Aplicación enviada |
+| `interview` | En entrevistas |
+| `offer` | Oferta recibida |
+| `rejected` | Rechazada |
+| `discarded` | Descartada |

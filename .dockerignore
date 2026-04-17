@@ -1,0 +1,20 @@
+.git
+.env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+
+# Datos personales — van en el volumen Docker, no en la imagen
+data/jobs.db
+data/cv.pdf
+data/cv_bck.pdf
+data/cover_letters/
+data/tailored_cvs/
+jobs.db
+
+# Logs
+*.log
+scrape.log

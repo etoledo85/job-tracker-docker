@@ -1,11 +1,11 @@
 """
 Genera cover letters personalizadas usando Claude.
 """
-import os
 import re
 from pathlib import Path
 from datetime import datetime
 from src.config import load_config, get_cv_text
+from src.ai_provider import complete as ai_complete
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -13,8 +13,10 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.enums import TA_LEFT, TA_JUSTIFY
 
+import os
 BASE_DIR = Path(__file__).parent.parent
-OUTPUT_DIR = BASE_DIR / "data" / "cover_letters"
+_data_dir = Path(os.environ.get("DATA_DIR", BASE_DIR / "data"))
+OUTPUT_DIR = _data_dir / "cover_letters"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -87,41 +89,8 @@ Descripción de la vacante:
 
 Escribe la cover letter ahora:"""
 
-    full_prompt = f"{system_prompt}\n\n{user_message}"
-
     try:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if api_key:
-            # Usar SDK directo si hay API key
-            import anthropic
-            client = anthropic.Anthropic(api_key=api_key)
-            model = cfg.get("anthropic", {}).get("model", "claude-sonnet-4-6")
-            message = client.messages.create(
-                model=model,
-                max_tokens=1024,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_message}]
-            )
-            letter_text = message.content[0].text.strip()
-        else:
-            # Fallback: usar claude CLI (Claude Code) via stdin
-            import subprocess
-            result = subprocess.run(
-                ["claude", "--print", "--dangerously-skip-permissions"],
-                input=full_prompt,
-                capture_output=True, text=True, timeout=120,
-                env={**os.environ}
-            )
-
-            if result.returncode != 0:
-                raise RuntimeError(f"claude CLI error: {result.stderr[:300]}")
-
-            letter_text = result.stdout.strip()
-            if not letter_text:
-                raise RuntimeError("claude CLI no devolvió texto")
-
-    except RuntimeError:
-        raise
+        letter_text = ai_complete(system_prompt, user_message, max_tokens=1024)
     except Exception as e:
         raise RuntimeError(f"Error generando cover letter: {e}")
 

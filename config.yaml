@@ -1,7 +1,7 @@
 profile:
-  name: "Erick Toledo"
-  email: "erick.toledoart@gmail.com"
-  phone: "+52 8441037231"
+  name: "Tu Nombre"
+  email: "tu@email.com"
+  phone: "+52 ..."
   cv_path: "data/cv.pdf"
 
 search:
@@ -17,6 +17,15 @@ search:
     - "VMware administrator"
     - "virtualization engineer"
     - "IT operations engineer"
+    - "devops engineer"
+    - "site reliability engineer"
+    - "SRE"
+    - "cloud engineer"
+    - "platform engineer"
+    - "network administrator"
+    - "IT infrastructure"
+    - "cloud administrator"
+    - "administrador de infraestructura"
   locations:
     - "Saltillo"
     - "Monterrey"
@@ -109,7 +118,7 @@ search:
 email:
   smtp_server: "smtp.gmail.com"
   smtp_port: 587
-  sender: "erick.toledoart@gmail.com"
+  sender: "tu@email.com"
   # Para obtener tu App Password de Gmail:
   # 1. Ve a myaccount.google.com/security
   # 2. Activa verificación en 2 pasos si no está activa
