@@ -11,15 +11,6 @@ from src.database import Job
 LINKEDIN_SEARCH = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 LINKEDIN_DETAIL = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{}"
 
-# Mapeo de nombres de ciudad a formato que usa LinkedIn
-CITY_MAP = {
-    "monterrey": "Monterrey, Nuevo León, México",
-    "saltillo":  "Saltillo, Coahuila, México",
-    "guadalajara": "Guadalajara, Jalisco, México",
-    "cdmx": "Ciudad de México, México",
-    "mexico": "México",
-}
-
 REMOTE_NAMES = {"remote", "remoto"}
 
 
@@ -34,7 +25,7 @@ class LinkedInScraper(BaseScraper):
         terms = []
         for kw in self.keywords:
             for loc in city_locs:
-                linkedin_loc = CITY_MAP.get(loc.lower(), loc)
+                linkedin_loc = loc
                 pair = (kw.lower(), linkedin_loc.lower())
                 if pair not in seen_pairs:
                     seen_pairs.add(pair)
