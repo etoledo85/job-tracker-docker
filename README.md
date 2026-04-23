@@ -2,52 +2,100 @@
 
 Automatiza tu búsqueda de trabajo: scraping de 14 bolsas de empleo, análisis ATS con IA, cover letters y CVs personalizados por vacante — todo en un contenedor Docker.
 
-## Inicio rápido
+## Instalación en 5 pasos
 
-### 1. Requisitos
+### Paso 1 — Instala Docker
 
-- Docker + Docker Compose
-- Una API key gratuita de IA (elige una):
-  - **OpenRouter** (recomendado) → https://openrouter.ai
-  - **Gemini** → https://aistudio.google.com/app/apikey
-  - **Anthropic** → https://console.anthropic.com/settings/keys
+Si no lo tienes: https://docs.docker.com/get-docker/
 
-### 2. Configuración
+Verifica que funcione:
 
 ```bash
-git clone <repo>
-cd job-tracker-docker
-
-# Credenciales
-cp .env.example .env
-# Edita .env con tu API key de IA y opcionalmente Gmail App Password
-
-# Perfil de búsqueda
-# Edita config.yaml con tu nombre, email y keywords de búsqueda
+docker --version
+docker compose version
 ```
 
-### 3. Sube tu CV
+---
+
+### Paso 2 — Obtén una API key gratuita de IA
+
+Elige **una** de estas opciones (no necesitas tarjeta de crédito):
+
+| Proveedor | Plan gratuito | Link |
+|-----------|--------------|------|
+| **Gemini** (recomendado) | 1,500 req/día | https://aistudio.google.com/app/apikey |
+| **OpenRouter** | Créditos gratis al registrarse | https://openrouter.ai |
+
+---
+
+### Paso 3 — Clona el repositorio
 
 ```bash
-mkdir -p data
+git clone https://github.com/etoledo85/job-tracker-docker.git
+cd job-tracker-docker
+```
+
+---
+
+### Paso 4 — Configura tus credenciales y perfil
+
+**4a. Copia el archivo de entorno y agrega tu API key:**
+
+```bash
+cp .env.example .env
+```
+
+Abre `.env` y rellena al menos una key:
+
+```env
+GEMINI_API_KEY=AIza...          # si usas Gemini
+OPENROUTER_API_KEY=sk-or-...    # si usas OpenRouter
+```
+
+**4b. Edita `config.yaml` con tu perfil de búsqueda:**
+
+```yaml
+profile:
+  name: "Tu Nombre"
+  email: "tu@email.com"
+  phone: "+52 ..."
+
+search:
+  keywords:
+    - "sysadmin"
+    - "devops engineer"
+    - "linux administrator"
+  locations:
+    - "remote"
+    - "remoto"
+  exclude_keywords:
+    - "junior"
+    - "intern"
+```
+
+**4c. Sube tu CV:**
+
+```bash
 cp /ruta/a/tu/cv.pdf data/cv.pdf
 ```
 
-### 4. Levanta el stack
+---
+
+### Paso 5 — Levanta el stack
 
 ```bash
-docker compose up -d web scheduler
+docker compose up -d
 ```
 
-Abre **http://localhost:8501** en tu browser. Listo.
+Abre **http://localhost:8501** en tu browser. Listo. 🎉
+
+La primera vez Docker descarga la imagen (~1.5 GB por Playwright/Chromium). Ten paciencia.
 
 ---
 
 ## Uso
 
-### Web UI (recomendado)
-
-Abre http://localhost:8501:
+### Web UI
 
 | Tab | Función |
 |-----|---------|
@@ -55,6 +103,8 @@ Abre http://localhost:8501:
 | 🔍 Scrape | Lanzar scrape manual de las fuentes que elijas. |
 | 🤖 IA | Análisis ATS, generar cover letter y CV personalizado. |
 | ⚙️ Config | Subir CV, ver configuración activa. |
+
+El scheduler corre automáticamente todos los días a las 08:00 y llena la DB con nuevas vacantes.
 
 ### CLI (opcional)
 
@@ -77,47 +127,20 @@ docker compose run --rm job-tracker python main.py stats
 
 ---
 
-## Configuración
-
-### `.env`
+## Variables de entorno (`.env`)
 
 ```env
-# IA — elige uno (OpenRouter es gratuito sin tarjeta)
-OPENROUTER_API_KEY=sk-or-...
+# IA — elige al menos una
 GEMINI_API_KEY=AIza...
+OPENROUTER_API_KEY=sk-or-...
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Email — para recibir resumen diario de vacantes nuevas (opcional)
+# Email — resumen diario de vacantes nuevas (opcional)
+# Genera tu App Password en: https://myaccount.google.com/apppasswords
 GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
 ```
 
-Para Gmail App Password: https://myaccount.google.com/apppasswords
-
-### `config.yaml`
-
-```yaml
-profile:
-  name: "Tu Nombre"
-  email: "tu@email.com"
-  phone: "+52 ..."
-  cv_path: "data/cv.pdf"
-
-search:
-  keywords:
-    - "sysadmin"
-    - "linux administrator"
-    - "devops engineer"
-    # agrega los roles que buscas
-  locations:
-    - "remote"
-    - "remoto"
-    - "Tu Ciudad"
-  remote_preference: true
-  exclude_keywords:
-    - "junior"
-    - "intern"
-    # filtra lo que no te interesa
-```
+El sistema usa la primera key que encuentre en este orden: `GEMINI → OPENROUTER → GROQ → ANTHROPIC`.
 
 ---
 
@@ -142,32 +165,7 @@ search:
 
 ---
 
-## Proveedores de IA soportados
-
-El sistema detecta automáticamente qué key tienes configurada (prioridad de izquierda a derecha):
-
-```
-GEMINI_API_KEY → OPENROUTER_API_KEY → GROQ_API_KEY → ANTHROPIC_API_KEY
-```
-
-OpenRouter tiene modelos gratuitos con fallback automático entre ellos.
-
----
-
-## Stack
-
-- **Docker + Playwright/Chromium** — scraping de SPAs
-- **Python 3.12** — backend
-- **SQLite** — base de datos local (persiste en Docker volume)
-- **Streamlit** — Web UI
-- **ReportLab** — generación de PDFs
-- **APScheduler-style scheduler** — scrape diario a las 08:00
-
----
-
-## Estructura de datos
-
-Las vacantes tienen los siguientes estados:
+## Estados de una vacante
 
 | Estado | Descripción |
 |--------|-------------|
@@ -178,3 +176,14 @@ Las vacantes tienen los siguientes estados:
 | `offer` | Oferta recibida |
 | `rejected` | Rechazada |
 | `discarded` | Descartada |
+
+---
+
+## Stack
+
+- **Docker + Playwright/Chromium** — scraping de SPAs con JS
+- **Python 3.12** — backend
+- **SQLite** — base de datos local (persiste en Docker volume)
+- **Streamlit** — Web UI
+- **ReportLab** — generación de PDFs
+- **APScheduler** — scrape diario automático
