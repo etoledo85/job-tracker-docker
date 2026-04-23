@@ -27,3 +27,6 @@ data/scrape.log
 .vscode/
 .idea/
 *.swp
+
+# Claude Code (configuración local de IDE, no va al repo)
+.claude/settings.local.json

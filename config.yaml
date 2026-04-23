@@ -1,119 +1,32 @@
 profile:
   name: "Tu Nombre"
   email: "tu@email.com"
-  phone: "+52 ..."
+  phone: "+1 555 123 4567"
   cv_path: "data/cv.pdf"
 
 search:
   keywords:
     - "sysadmin"
-    - "systems administrator"
     - "linux administrator"
-    - "server administrator"
-    - "infrastructure engineer"
-    - "administrador de sistemas"
-    - "administrador linux"
-    - "infraestructura IT"
-    - "VMware administrator"
-    - "virtualization engineer"
-    - "IT operations engineer"
     - "devops engineer"
     - "site reliability engineer"
-    - "SRE"
     - "cloud engineer"
-    - "platform engineer"
-    - "network administrator"
-    - "IT infrastructure"
-    - "cloud administrator"
-    - "administrador de infraestructura"
+    # Agrega los roles que buscas
   locations:
-    - "Saltillo"
-    - "Monterrey"
     - "remote"
     - "remoto"
+    - "Tu Ciudad"
+    # Agrega tu ciudad o región
   remote_preference: true
-  # Ubicaciones excluidas (presencial en estas zonas = no aplica)
-  exclude_locations:
-    - "Ciudad de México"
-    - "CDMX"
-    - "Naucalpan"
-    - "Cuauhtémoc"
-    - "Tlalpan"
-    - "Coyoacán"
-    - "Iztapalapa"
-    - "Azcapotzalco"
-    - "Gustavo A. Madero"
-    - "Miguel Hidalgo"
-    - "Benito Juárez"
-  # Palabras clave para filtrar vacantes irrelevantes
   exclude_keywords:
-    # Nivel incorrecto
     - "junior"
     - "intern"
     - "practicante"
     - "becario"
-    - "jr."
-    # Roles incorrectos
-    - "ventas"
-    - "financiero"
-    - "asesor"
-    - "ejecutivo financiero"
-    - "desarrollador"
-    - "full stack"
-    - "frontend"
-    - "backend"
-    - "soporte técnico"
-    - "help desk"
-    - "base de datos"
-    - "power platform"
-    - "ris/pacs"
-    - "opentext teamsite"
-    - "oracle ebs"
-    - "ebs l3"
-    - "calidad automotriz"
-    # Clearance / defensa (solo ciudadanos US)
     - "security clearance"
-    - "clearance required"
-    - "ts/sci"
-    - "top secret"
-    - "secret clearance"
-    - "polygraph"
-    # Turno nocturno
-    - "3rd shift"
-    - "night shift"
-    - "overnight shift"
-    - "graveyard shift"
-
-  # Títulos exactos a excluir (match en título, no en descripción)
-  exclude_titles:
-    - "systems administrator i"
-    - "administrator i"
-    - "infrastructure engineer i"
-    - "it operations engineer i"
-
-  # Patrones de ubicación USA presencial (ciudad+estado = on-site, no remoto real para MX)
-  exclude_us_cities:
-    - "Georgia, Estados Unidos"
-    - "Virginia, Estados Unidos"
-    - "Tennessee, Estados Unidos"
-    - "Massachusetts, Estados Unidos"
-    - "Alabama, Estados Unidos"
-    - "Nebraska, Estados Unidos"
-    - "Pennsylvania, Estados Unidos"
-    - "Nueva York, Estados Unidos"
-    - "New York, Estados Unidos"
-    - "Ohio, Estados Unidos"
-    - "Texas, Estados Unidos"
-    - "Illinois, Estados Unidos"
-    - "Washington, Estados Unidos"
-    - "Maryland, Estados Unidos"
-    - "Colorado, Estados Unidos"
-    - "Arizona, Estados Unidos"
-    - "Florida, Estados Unidos"
-    - "North Carolina, Estados Unidos"
-    - "Georgia, United States"
-    - "Virginia, United States"
-    - "Tennessee, United States"
+    # Agrega palabras que quieras filtrar
+  exclude_titles: []
+  exclude_locations: []
 
 email:
   smtp_server: "smtp.gmail.com"
@@ -121,16 +34,11 @@ email:
   sender: "tu@email.com"
   # Para obtener tu App Password de Gmail:
   # 1. Ve a myaccount.google.com/security
-  # 2. Activa verificación en 2 pasos si no está activa
-  # 3. Busca "Contraseñas de aplicaciones"
-  # 4. Genera una para "Correo > Otra aplicación"
-  # 5. Pega el código de 16 caracteres aquí:
-  app_password: ""  # Cargar desde .env → GMAIL_APP_PASSWORD
-
-anthropic:
-  model: "claude-sonnet-4-6"
+  # 2. Activa verificación en 2 pasos
+  # 3. Busca "Contraseñas de aplicaciones" y genera una
+  app_password: ""
 
 cover_letter:
-  language: "auto"  # "auto" detecta según el idioma de la vacante, o "es" / "en"
+  language: "auto"  # "auto" detecta el idioma de la vacante, o "es" / "en"
   tone: "professional"
-  max_length: 400  # palabras aproximadas
+  max_length: 400   # palabras aproximadas

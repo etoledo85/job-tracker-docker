@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Job Tracker CLI – Automatiza la búsqueda de trabajo de Erick Toledo
+Job Tracker CLI – Automatiza tu búsqueda de trabajo
 Uso: python main.py [COMMAND]
 """
 import sys
@@ -50,7 +50,7 @@ def main(ctx: typer.Context):
     init_db()
     if ctx.invoked_subcommand is None:
         rprint(Panel.fit(
-            "[bold cyan]Job Tracker[/bold cyan] – Erick Toledo\n\n"
+            "[bold cyan]Job Tracker[/bold cyan] – Automatiza tu búsqueda de empleo\n\n"
             "  [green]python main.py scrape[/green]         Buscar nuevas vacantes\n"
             "  [green]python main.py list[/green]           Ver vacantes guardadas\n"
             "  [green]python main.py show <id>[/green]      Ver detalle de una vacante\n"
