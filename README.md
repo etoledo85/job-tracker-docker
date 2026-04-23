@@ -2,7 +2,31 @@
 
 Automatiza tu búsqueda de trabajo: scraping de 14 bolsas de empleo, análisis ATS con IA, cover letters y CVs personalizados por vacante — todo en un contenedor Docker.
 
-## Instalación en 5 pasos
+## Instalación rápida (script automático)
+
+El script instala Docker, clona el proyecto, te guía por la configuración y levanta todo automáticamente.
+
+**Linux / macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/etoledo85/job-tracker-docker/master/install.sh | bash
+```
+
+O si ya tienes el repositorio clonado:
+```bash
+bash install.sh
+```
+
+**Windows** (PowerShell como Administrador):
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force
+.\install.ps1
+```
+
+> El script detecta tu sistema operativo, instala Docker si no está, y te hace preguntas simples para configurar todo.
+
+---
+
+## Instalación manual (paso a paso)
 
 ### Paso 1 — Instala Docker
 
