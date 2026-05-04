@@ -13,9 +13,15 @@ sys.path.insert(0, str(ROOT))
 
 from src.database import init_db, get_jobs, get_job, update_job, get_stats, VALID_STATUSES
 from src.config import load_config
+from src.web.wizard import is_first_run, run_wizard
 
 # ─── Inicialización ────────────────────────────────────────────────────────────
 init_db()
+
+# ─── Wizard de primer uso ──────────────────────────────────────────────────────
+if is_first_run() and "wizard_done" not in st.session_state:
+    run_wizard()
+    st.stop()
 
 st.set_page_config(
     page_title="Job Tracker",

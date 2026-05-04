@@ -5,6 +5,25 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
 
 
+def _decrypt_env_vars():
+    """Descifra en os.environ cualquier valor con prefijo ENC: usando la clave en DATA_DIR."""
+    data_dir = Path(os.environ.get("DATA_DIR", BASE_DIR / "data"))
+    key_path = data_dir / "secret.key"
+    if not key_path.exists():
+        return
+    try:
+        from cryptography.fernet import Fernet
+        f = Fernet(key_path.read_bytes())
+        for k, v in list(os.environ.items()):
+            if v.startswith("ENC:"):
+                try:
+                    os.environ[k] = f.decrypt(v[4:].encode()).decode()
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+
 def _load_env():
     """Carga .env si existe (sin dependencia de python-dotenv)."""
     env_path = BASE_DIR / ".env"
@@ -17,6 +36,7 @@ def _load_env():
                 continue
             key, _, value = line.partition("=")
             os.environ.setdefault(key.strip(), value.strip())
+    _decrypt_env_vars()
 
 
 def load_config() -> dict:

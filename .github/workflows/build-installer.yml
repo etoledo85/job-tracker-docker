@@ -1,0 +1,117 @@
+name: Build Installers
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build deps
+        run: pip install -r installer/requirements.txt
+
+      - name: Build .exe
+        working-directory: installer
+        run: |
+          pyinstaller `
+            --onefile `
+            --windowed `
+            --name "JobTracker-Setup" `
+            --add-data "..\config.yaml;." `
+            --add-data "..\docker-compose.yml;." `
+            --distpath ".." `
+            installer.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JobTracker-Setup-Windows
+          path: JobTracker-Setup.exe
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: JobTracker-Setup.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build deps
+        run: pip3 install -r installer/requirements.txt
+
+      - name: Build binary
+        working-directory: installer
+        run: |
+          pyinstaller \
+            --onefile \
+            --windowed \
+            --name "JobTracker-Setup-macOS" \
+            --add-data "../config.yaml:." \
+            --add-data "../docker-compose.yml:." \
+            --distpath ".." \
+            installer.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JobTracker-Setup-macOS
+          path: JobTracker-Setup-macOS
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: JobTracker-Setup-macOS
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build deps + tkinter
+        run: |
+          sudo apt-get install -y python3-tk
+          pip install -r installer/requirements.txt
+
+      - name: Build binary
+        working-directory: installer
+        run: |
+          pyinstaller \
+            --onefile \
+            --name "JobTracker-Setup-Linux" \
+            --add-data "../config.yaml:." \
+            --add-data "../docker-compose.yml:." \
+            --distpath ".." \
+            installer.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JobTracker-Setup-Linux
+          path: JobTracker-Setup-Linux
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: JobTracker-Setup-Linux
