@@ -16,6 +16,55 @@ function Write-Info  { param($msg) Write-Host "  $msg" }
 function Write-Line  { Write-Host "─────────────────────────────────────────" -ForegroundColor Blue }
 function Ask-User    { param($prompt) Write-Host "▶ $prompt " -ForegroundColor Cyan -NoNewline; return Read-Host }
 
+# ── Helper: docker compose (v2 plugin) o docker-compose (v1) ─────────────────
+function Refresh-DockerPath {
+    # Recarga PATH del sistema para capturar instalaciones recientes
+    $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
+    $userPath    = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    $env:PATH    = "$machinePath;$userPath"
+
+    # Inyecta rutas conocidas de Docker Desktop si no están presentes
+    $knownPaths = @(
+        "C:\Program Files\Docker\Docker\resources\bin",
+        "C:\ProgramData\DockerDesktop\version-bin"
+    )
+    foreach ($p in $knownPaths) {
+        if ((Test-Path $p) -and ($env:PATH -notlike "*$p*")) {
+            $env:PATH = "$p;$env:PATH"
+        }
+    }
+}
+
+function Invoke-DockerCompose {
+    Refresh-DockerPath
+
+    # Intentar docker compose (v2, plugin — Docker Desktop moderno)
+    $dockerCmd = Get-Command docker -ErrorAction SilentlyContinue
+    if ($dockerCmd) {
+        & docker compose version 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            & docker compose @args
+            if ($LASTEXITCODE -ne 0) {
+                throw "docker compose falló con código $LASTEXITCODE"
+            }
+            return
+        }
+    }
+
+    # Fallback: docker-compose (v1, standalone)
+    $dcCmd = Get-Command docker-compose -ErrorAction SilentlyContinue
+    if ($dcCmd) {
+        Write-Warn "Usando docker-compose (v1). Considera actualizar Docker Desktop."
+        & docker-compose @args
+        if ($LASTEXITCODE -ne 0) {
+            throw "docker-compose falló con código $LASTEXITCODE"
+        }
+        return
+    }
+
+    throw "No se encontró 'docker compose' ni 'docker-compose'.`nAsegúrate de que Docker Desktop esté instalado y ABIERTO (ícono de ballena en la barra de tareas)."
+}
+
 # ── Cabecera ──────────────────────────────────────────────────────────────────
 Clear-Host
 Write-Host ""
@@ -112,14 +161,28 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
 
 # ── Instalar Docker Desktop ───────────────────────────────────────────────────
 Write-Step "Verificando Docker Desktop"
+Refresh-DockerPath
 if (Get-Command docker -ErrorAction SilentlyContinue) {
-    try {
-        docker info 2>$null | Out-Null
+    $dockerInfo = & docker info 2>&1
+    if ($LASTEXITCODE -eq 0) {
         Write-Ok "Docker Desktop ya está corriendo"
-    } catch {
-        Write-Warn "Docker está instalado pero no está corriendo."
-        Write-Info "Abre Docker Desktop desde el menú de inicio y espera al ícono de la ballena."
+    } else {
+        Write-Warn "Docker está instalado pero el daemon no responde."
+        Write-Host ""
+        Write-Info "Para solucionarlo:"
+        Write-Info "  1. Busca 'Docker Desktop' en el menú de inicio y ábrelo"
+        Write-Info "  2. Espera a que aparezca el ícono de la ballena en la barra de tareas"
+        Write-Info "  3. El ícono debe decir 'Docker Desktop is running' al pasar el cursor"
+        Write-Host ""
         Ask-User "Presiona ENTER cuando Docker Desktop esté corriendo..." | Out-Null
+
+        # Verificar de nuevo tras la espera
+        Refresh-DockerPath
+        $dockerInfo2 = & docker info 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Err "Docker sigue sin responder. Reinicia Docker Desktop e intenta de nuevo."
+        }
+        Write-Ok "Docker Desktop está corriendo"
     }
 } else {
     Write-Info "Instalando Docker Desktop..."
@@ -358,8 +421,12 @@ Write-Info "Esto puede tardar varios minutos la primera vez."
 Write-Info "Se descarga la imagen con Playwright y Chromium (~1.5 GB)."
 Write-Host ""
 
-docker compose build --quiet
-docker compose up -d web scheduler
+try {
+    Invoke-DockerCompose build --quiet
+    Invoke-DockerCompose up -d web scheduler
+} catch {
+    Write-Err $_
+}
 Write-Host ""
 Write-Ok "Contenedores levantados"
 

@@ -25,6 +25,34 @@ else:
 DATA_DIR = PROJECT_DIR / "data"
 SYSTEM = platform.system()  # 'Windows', 'Darwin', 'Linux'
 
+# ─── Rutas de Docker en Windows ───────────────────────────────────────────────
+_DOCKER_WIN_PATHS = [
+    r"C:\Program Files\Docker\Docker\resources\bin",
+    r"C:\ProgramData\DockerDesktop\version-bin",
+    r"C:\Program Files\Docker\resources\bin",
+]
+
+
+def _docker_env() -> dict:
+    """Env vars con las rutas de Docker inyectadas (necesario en binarios PyInstaller)."""
+    env = os.environ.copy()
+    if SYSTEM == "Windows":
+        extra = ";".join(p for p in _DOCKER_WIN_PATHS if Path(p).exists())
+        if extra:
+            env["PATH"] = extra + ";" + env.get("PATH", "")
+    return env
+
+
+def _compose_cmd() -> list:
+    """Detecta si usar 'docker compose' (plugin v2) o 'docker-compose' (v1)."""
+    env = _docker_env()
+    r = subprocess.run(["docker", "compose", "version"], capture_output=True, env=env)
+    if r.returncode == 0:
+        return ["docker", "compose"]
+    if shutil.which("docker-compose"):
+        return ["docker-compose"]
+    return ["docker", "compose"]  # último recurso
+
 # ─── Proveedores de IA ────────────────────────────────────────────────────────
 AI_PROVIDERS = {
     "Gemini Flash (Gratuito — Recomendado)": {
@@ -64,13 +92,18 @@ ENTRY   = "#0d1a2d"
 
 # ─── Utilidades ──────────────────────────────────────────────────────────────
 def _run(cmd: list, **kwargs) -> subprocess.CompletedProcess:
+    kwargs.setdefault("env", _docker_env())
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
 
 def docker_running() -> bool:
-    if shutil.which("docker") is None:
+    env = _docker_env()
+    # En Windows busca también en las rutas conocidas de Docker Desktop
+    docker_exe = shutil.which("docker", path=env.get("PATH"))
+    if docker_exe is None:
         return False
-    return _run(["docker", "info"]).returncode == 0
+    r = subprocess.run(["docker", "info"], capture_output=True, env=env)
+    return r.returncode == 0
 
 
 def docker_version() -> str:
@@ -704,14 +737,20 @@ class InstallerApp(tk.Tk):
                 "Construyendo imagen Docker (puede tardar 5-10 min la primera vez)...", 60
             ))
 
+            compose = _compose_cmd()
             result = subprocess.run(
-                ["docker", "compose", "up", "--build", "-d"],
+                compose + ["up", "--build", "-d"],
                 cwd=str(PROJECT_DIR),
                 capture_output=True, text=True, timeout=900,
+                env=_docker_env(),
             )
 
             if result.returncode != 0:
-                raise RuntimeError(f"docker compose falló:\n{result.stderr[-600:]}")
+                raise RuntimeError(
+                    f"docker compose falló:\n{result.stderr[-800:]}\n\n"
+                    "Asegúrate de que Docker Desktop esté ABIERTO y funcionando "
+                    "(ícono de la ballena en la barra de tareas)."
+                )
 
             self.after(0, lambda: self._set_status("Esperando que el servidor arranque...", 90))
             time.sleep(6)
