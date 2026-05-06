@@ -30,3 +30,4 @@ data/scrape.log
 
 # Claude Code (configuración local de IDE, no va al repo)
 .claude/settings.local.json
+CLAUDE.md
