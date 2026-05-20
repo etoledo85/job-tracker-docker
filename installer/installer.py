@@ -18,11 +18,25 @@ from pathlib import Path
 
 # ─── Rutas ────────────────────────────────────────────────────────────────────
 if getattr(sys, "frozen", False):
-    PROJECT_DIR = Path(sys.executable).parent
+    _BUNDLE_DIR = Path(sys._MEIPASS)
+    PROJECT_DIR = Path(sys.executable).parent / "job-tracker"
 else:
+    _BUNDLE_DIR = Path(__file__).resolve().parent.parent
     PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 DATA_DIR = PROJECT_DIR / "data"
+
+
+def _extract_project_files():
+    """Copia docker-compose.yml, Dockerfile y .env.example del bundle a PROJECT_DIR en disco."""
+    PROJECT_DIR.mkdir(parents=True, exist_ok=True)
+    for fname in ("docker-compose.yml", "Dockerfile", ".env.example"):
+        src = _BUNDLE_DIR / fname
+        dst = PROJECT_DIR / fname
+        if src.exists() and not dst.exists():
+            shutil.copy2(src, dst)
+
+
 SYSTEM = platform.system()  # 'Windows', 'Darwin', 'Linux'
 
 # ─── Rutas de Docker en Windows ───────────────────────────────────────────────
@@ -713,6 +727,9 @@ class InstallerApp(tk.Tk):
 
     def _install_worker(self):
         try:
+            self.after(0, lambda: self._set_status("Extrayendo archivos del proyecto...", 5))
+            _extract_project_files()
+
             self.after(0, lambda: self._set_status("Preparando directorios...", 10))
             DATA_DIR.mkdir(parents=True, exist_ok=True)
 
