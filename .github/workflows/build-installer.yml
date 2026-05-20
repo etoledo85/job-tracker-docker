@@ -2,8 +2,8 @@ name: Build Installers
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
@@ -35,12 +35,6 @@ jobs:
           name: job-tracker-installer-windows
           path: job-tracker-installer.exe
 
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: job-tracker-installer.exe
-
   build-macos:
     runs-on: macos-latest
     steps:
@@ -62,12 +56,6 @@ jobs:
         with:
           name: job-tracker-installer-macos
           path: job-tracker-installer
-
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: job-tracker-installer
 
   build-linux:
     runs-on: ubuntu-latest
@@ -93,8 +81,53 @@ jobs:
           name: job-tracker-installer-linux
           path: job-tracker-installer
 
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/')
+  release:
+    name: Publish Latest Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: job-tracker-installer-windows
+          path: dist/windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: job-tracker-installer-macos
+          path: dist/macos
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: job-tracker-installer-linux
+          path: dist/linux
+
+      - name: Stage release assets
+        run: |
+          cp dist/windows/job-tracker-installer.exe job-tracker-installer.exe
+          cp dist/macos/job-tracker-installer job-tracker-installer-macos
+          cp dist/linux/job-tracker-installer job-tracker-installer-linux
+          chmod +x job-tracker-installer-macos job-tracker-installer-linux
+
+      - name: Move latest tag to HEAD
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git tag -f latest
+          git push origin latest --force
+
+      - name: Create or update latest release
         uses: softprops/action-gh-release@v2
         with:
-          files: job-tracker-installer
+          tag_name: latest
+          name: "Latest Build"
+          prerelease: false
+          make_latest: true
+          files: |
+            job-tracker-installer.exe
+            job-tracker-installer-macos
+            job-tracker-installer-linux

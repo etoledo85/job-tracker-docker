@@ -726,6 +726,15 @@ class InstallerApp(tk.Tk):
         threading.Thread(target=self._install_worker, daemon=True).start()
 
     def _install_worker(self):
+        log_path = Path(sys.executable).parent / "install_debug.log"
+        with open(log_path, "w") as f:
+            f.write(f"frozen: {getattr(sys, 'frozen', False)}\n")
+            f.write(f"executable: {sys.executable}\n")
+            f.write(f"_BUNDLE_DIR: {_BUNDLE_DIR}\n")
+            f.write(f"PROJECT_DIR: {PROJECT_DIR}\n")
+            bundle_files = list(_BUNDLE_DIR.iterdir()) if _BUNDLE_DIR.exists() else []
+            f.write(f"bundle files: {bundle_files}\n")
+            f.write(f"docker-compose.yml in bundle: {(_BUNDLE_DIR / 'docker-compose.yml').exists()}\n")
         try:
             self.after(0, lambda: self._set_status("Extrayendo archivos del proyecto...", 5))
             _extract_project_files()
