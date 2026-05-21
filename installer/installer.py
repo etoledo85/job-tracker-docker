@@ -28,13 +28,18 @@ DATA_DIR = PROJECT_DIR / "data"
 
 
 def _extract_project_files():
-    """Copia docker-compose.yml, Dockerfile y .env.example del bundle a PROJECT_DIR en disco."""
+    """Copia todos los archivos del proyecto del bundle a PROJECT_DIR en disco."""
     PROJECT_DIR.mkdir(parents=True, exist_ok=True)
-    for fname in ("docker-compose.yml", "Dockerfile", ".env.example"):
+    for fname in ("docker-compose.yml", "Dockerfile", "requirements.txt",
+                  "main.py", "daily_scrape.py", "scheduler.py", ".env.example"):
         src = _BUNDLE_DIR / fname
         dst = PROJECT_DIR / fname
         if src.exists() and not dst.exists():
             shutil.copy2(src, dst)
+    src_dir = _BUNDLE_DIR / "src"
+    dst_dir = PROJECT_DIR / "src"
+    if src_dir.exists() and not dst_dir.exists():
+        shutil.copytree(src_dir, dst_dir)
 
 
 SYSTEM = platform.system()  # 'Windows', 'Darwin', 'Linux'

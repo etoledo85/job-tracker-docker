@@ -7,6 +7,11 @@ repo_root = Path(SPECPATH).parent
 datas = [
     (str(repo_root / "docker-compose.yml"), "."),
     (str(repo_root / "Dockerfile"), "."),
+    (str(repo_root / "requirements.txt"), "."),
+    (str(repo_root / "main.py"), "."),
+    (str(repo_root / "daily_scrape.py"), "."),
+    (str(repo_root / "scheduler.py"), "."),
+    (str(repo_root / "src"), "src"),
 ]
 
 env_example = repo_root / ".env.example"
