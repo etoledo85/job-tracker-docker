@@ -5,6 +5,7 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+import yaml
 import streamlit as st
 
 # Asegurar que el raíz del proyecto esté en el path
@@ -346,11 +347,9 @@ with tab_ai:
 # TAB 4 — CONFIG
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab_config:
-    st.title("Configuración")
+    st.title("⚙️ Configuración")
 
-    cfg = load_config()
-
-    # Subir CV
+    # ── Subir CV ──────────────────────────────────────────────────────────────
     st.subheader("CV")
     data_dir = Path(os.environ.get("DATA_DIR", ROOT / "data"))
     cv_path = data_dir / "cv.pdf"
@@ -367,25 +366,170 @@ with tab_config:
 
     st.divider()
 
-    # Info de configuración activa
-    st.subheader("Configuración activa")
-    profile = cfg.get("profile", {})
-    c1, c2 = st.columns(2)
-    c1.markdown(f"**Nombre:** {profile.get('name', '—')}")
-    c1.markdown(f"**Email:** {profile.get('email', '—')}")
-    c2.markdown(f"**Proveedor IA activo:** {'Gemini' if os.environ.get('GEMINI_API_KEY') else 'Claude' if os.environ.get('ANTHROPIC_API_KEY') else '⚠️ Ninguno'}")
-    c2.markdown(f"**Modelo Claude:** {cfg.get('anthropic', {}).get('model', 'claude-sonnet-4-6')}")
+    # ── Editar config.yaml ────────────────────────────────────────────────────
+    st.subheader("📋 Editar configuración")
+
+    _cfg_path = Path(os.environ.get("CONFIG_PATH", "/data/config.yaml"))
+
+    try:
+        if _cfg_path.exists():
+            with open(_cfg_path, "r", encoding="utf-8") as _fh:
+                _cfg_raw = yaml.safe_load(_fh) or {}
+        else:
+            _cfg_raw = {}
+    except Exception as _load_err:
+        st.error(f"No se pudo cargar config.yaml: {_load_err}")
+        _cfg_raw = {}
+
+    _s = _cfg_raw.get("search", {})
+    _p = _cfg_raw.get("profile", {})
+    _e = _cfg_raw.get("email", {})
+    _cl = _cfg_raw.get("cover_letter", {})
+
+    _stab_search, _stab_profile, _stab_email, _stab_cl = st.tabs(
+        ["🔍 Búsqueda", "👤 Perfil", "📧 Email", "✉️ Carta de presentación"]
+    )
+
+    with _stab_search:
+        _kw = st.text_area(
+            "Keywords de búsqueda (una por línea)",
+            value="\n".join(_s.get("keywords", [])),
+            height=120, key="cfg_keywords",
+        )
+        _loc = st.text_area(
+            "Ubicaciones (una por línea)",
+            value="\n".join(_s.get("locations", [])),
+            height=80, key="cfg_locations",
+        )
+        _remote = st.toggle(
+            "Preferir empleos remotos",
+            value=bool(_s.get("remote_preference", False)),
+            key="cfg_remote",
+        )
+        _excl_kw = st.text_area(
+            "Keywords excluidas (una por línea)",
+            value="\n".join(_s.get("exclude_keywords", [])),
+            height=80, key="cfg_excl_kw",
+        )
+
+    with _stab_profile:
+        _pname = st.text_input("Nombre completo", value=_p.get("name", ""), key="cfg_p_name")
+        _pemail = st.text_input("Email", value=_p.get("email", ""), key="cfg_p_email")
+        _pphone = st.text_input("Teléfono", value=_p.get("phone", ""), key="cfg_p_phone")
+
+    with _stab_email:
+        _smtp_srv = st.text_input(
+            "Servidor SMTP", value=_e.get("smtp_server", "smtp.gmail.com"), key="cfg_smtp_srv"
+        )
+        _smtp_port = st.number_input(
+            "Puerto SMTP", value=int(_e.get("smtp_port", 587)),
+            min_value=1, max_value=65535, key="cfg_smtp_port",
+        )
+        _sender = st.text_input("Remitente", value=_e.get("sender", ""), key="cfg_sender")
+        _app_pass = st.text_input(
+            "App Password", value=_e.get("app_password", ""),
+            type="password", key="cfg_app_pass",
+        )
+
+    with _stab_cl:
+        _lang_opts = ["auto", "es", "en"]
+        _lang = st.selectbox(
+            "Idioma", options=_lang_opts,
+            index=_lang_opts.index(_cl.get("language", "auto"))
+            if _cl.get("language", "auto") in _lang_opts else 0,
+            key="cfg_cl_lang",
+        )
+        _tone_opts = ["professional", "casual", "formal"]
+        _tone = st.selectbox(
+            "Tono", options=_tone_opts,
+            index=_tone_opts.index(_cl.get("tone", "professional"))
+            if _cl.get("tone", "professional") in _tone_opts else 0,
+            key="cfg_cl_tone",
+        )
+        _maxlen = st.number_input(
+            "Longitud máxima (palabras)",
+            value=int(_cl.get("max_length", 400)),
+            min_value=100, max_value=1000, step=50, key="cfg_cl_maxlen",
+        )
+
+    if st.button("💾 Guardar configuración", type="primary", key="btn_save_cfg"):
+        try:
+            _out = dict(_cfg_raw)
+            _out["search"] = {
+                "keywords": [k.strip() for k in _kw.split("\n") if k.strip()],
+                "locations": [l.strip() for l in _loc.split("\n") if l.strip()],
+                "remote_preference": _remote,
+                "exclude_keywords": [k.strip() for k in _excl_kw.split("\n") if k.strip()],
+                "exclude_titles": _s.get("exclude_titles", []),
+                "exclude_locations": _s.get("exclude_locations", []),
+            }
+            _out["profile"] = {
+                "name": _pname, "email": _pemail, "phone": _pphone,
+                "cv_path": _p.get("cv_path", "data/cv.pdf"),
+            }
+            _out["email"] = {
+                "smtp_server": _smtp_srv, "smtp_port": int(_smtp_port),
+                "sender": _sender, "app_password": _app_pass,
+            }
+            _out["cover_letter"] = {
+                "language": _lang, "tone": _tone, "max_length": int(_maxlen),
+            }
+            _cfg_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(_cfg_path, "w", encoding="utf-8") as _fh:
+                yaml.dump(_out, _fh, allow_unicode=True, default_flow_style=False, sort_keys=False)
+            st.success("✅ Configuración guardada.")
+        except Exception as _save_err:
+            st.error(f"❌ Error al guardar: {_save_err}")
 
     st.divider()
-    st.subheader("Keywords de búsqueda")
-    keywords = cfg.get("search", {}).get("keywords", [])
-    st.write(", ".join(keywords))
 
-    st.subheader("Fuentes activas (scrape diario)")
-    st.write(", ".join([
-        "remotive", "wwr", "linkedin", "computrabajo", "occ",
-        "remoteok", "himalayas", "getonboard", "jobicy", "glassdoor",
-    ]))
+    # ── Control del contenedor ────────────────────────────────────────────────
+    st.subheader("🐳 Control del contenedor")
 
-    st.divider()
-    st.caption("Para modificar keywords, locations o filtros edita `config.yaml` y reinicia el contenedor.")
+    try:
+        import docker as _docker_sdk
+        _dclient = _docker_sdk.from_env()
+        _dclient.ping()
+        _docker_ok = True
+    except Exception:
+        _docker_ok = False
+
+    if not _docker_ok:
+        st.warning(
+            "⚠️ No se puede conectar al socket de Docker. "
+            "Asegúrate de que el socket esté montado en el contenedor."
+        )
+    else:
+        _project = os.environ.get("COMPOSE_PROJECT_NAME", "job-tracker")
+        _dcol1, _dcol2, _dcol3 = st.columns(3)
+
+        if _dcol1.button("🔄 Reiniciar scheduler", key="btn_restart_sched"):
+            try:
+                _dclient.containers.get("job-tracker-scheduler").restart()
+                st.success("Scheduler reiniciado.")
+            except Exception as _de:
+                st.error(f"Error: {_de}")
+
+        if _dcol2.button("🔄 Reiniciar todos", key="btn_restart_all"):
+            try:
+                _dctrs = _dclient.containers.list(
+                    filters={"label": f"com.docker.compose.project={_project}"}
+                )
+                for _dc in _dctrs:
+                    if _dc.name == "job-tracker-web":
+                        continue
+                    _dc.restart()
+                st.success("Contenedores reiniciados (excepto web).")
+            except Exception as _de:
+                st.error(f"Error: {_de}")
+
+        if _dcol3.button("⏹ Detener todo", key="btn_stop_all"):
+            try:
+                _dctrs = _dclient.containers.list(
+                    filters={"label": f"com.docker.compose.project={_project}"}
+                )
+                for _dc in _dctrs:
+                    _dc.stop()
+                st.success("Contenedores detenidos.")
+            except Exception as _de:
+                st.error(f"Error: {_de}")

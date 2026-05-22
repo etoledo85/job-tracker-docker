@@ -1,3 +1,5 @@
 pyinstaller>=6.0.0
 cryptography>=42.0.0
 pyyaml>=6.0.0
+winshell>=0.6; sys_platform == "win32"
+pywin32>=305; sys_platform == "win32"

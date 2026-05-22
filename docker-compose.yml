@@ -17,6 +17,7 @@ services:
     env_file: .env
     volumes:
       - job-tracker-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
     command: streamlit run src/web/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true --client.toolbarMode minimal
     ports:
       - "8501:8501"

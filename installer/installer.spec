@@ -18,12 +18,22 @@ env_example = repo_root / ".env.example"
 if env_example.exists():
     datas.append((str(env_example), "."))
 
+icon_file = repo_root / "installer" / "icon.ico"
+if icon_file.exists():
+    datas.append((str(icon_file), "."))
+
+hiddenimports = (
+    ["winshell", "win32com.shell", "win32com", "pywintypes"]
+    if sys.platform == "win32"
+    else []
+)
+
 a = Analysis(
     ["installer.py"],
     pathex=[str(repo_root)],
     binaries=[],
     datas=datas,
-    hiddenimports=[],
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
