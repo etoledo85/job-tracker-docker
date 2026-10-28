@@ -1,6 +1,6 @@
 # Job Tracker
 
-Automatiza tu búsqueda de trabajo: scraping de 14 bolsas de empleo, análisis ATS con IA, cover letters y CVs personalizados por vacante — todo en un contenedor Docker.
+Automatiza tu búsqueda de trabajo: agregación de 9 bolsas de empleo (APIs, RSS y páginas públicas), análisis ATS con IA, cover letters y CVs personalizados por vacante — todo en un contenedor Docker.
 
 ## Instalación rápida (script automático)
 
@@ -176,16 +176,14 @@ El sistema usa la primera key que encuentre en este orden: `GEMINI → OPENROUTE
 | We Work Remotely | RSS | ✅ |
 | RemoteOK | Playwright | ✅ |
 | Himalayas | API + Playwright | ✅ |
-| LinkedIn | Playwright | ✅ |
 | Computrabajo | Playwright | ✅ |
 | OCC | Playwright | ✅ |
 | GetOnBoard | API pública | ✅ |
 | Jobicy | API pública | ✅ |
-| Glassdoor | Playwright | ✅ |
 | Hireline | requests + BS4 | ✅ |
-| Torre | — | ⚠️ Login requerido |
-| Wellfound | — | ⚠️ Anti-bot |
-| InfoJobs | — | ⚠️ CAPTCHA |
+
+> **Nota:** el proyecto no incluye scrapers de LinkedIn ni Glassdoor. Sus términos de servicio
+> prohíben el acceso automatizado. Revisa los términos de cada fuente antes de activarla.
 
 ---
 

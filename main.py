@@ -68,8 +68,8 @@ def main(ctx: typer.Context):
 @app.command()
 def scrape(
     sources: str = typer.Option("all", "--sources", "-s",
-                                help="Fuentes: all, remotive, wwr, linkedin, computrabajo, glassdoor, "
-                                     "torre, getonboard, wellfound, hireline, honeypot, infojobs")
+                                help="Fuentes: all, remotive, wwr, computrabajo, occ, remoteok, "
+                                     "himalayas, getonboard, jobicy, hireline")
 ):
     """Busca nuevas vacantes en todas las bolsas configuradas."""
     init_db()
@@ -83,43 +83,30 @@ def scrape(
 
     from src.scrapers.remotive import RemotiveScraper
     from src.scrapers.weworkremotely import WeWorkRemotelyScraper
-    from src.scrapers.linkedin import LinkedInScraper
     from src.scrapers.computrabajo import ComputrabajoScraper
-    from src.scrapers.glassdoor import GlassdoorScraper
     from src.scrapers.occ import OCCScraper
     from src.scrapers.remoteok import RemoteOKScraper
     from src.scrapers.himalayas import HimalayasScraper
-    from src.scrapers.torre import TorreScraper
     from src.scrapers.getonboard import GetOnBoardScraper
-    from src.scrapers.wellfound import WellfoundScraper
+    from src.scrapers.jobicy import JobicyScraper
     from src.scrapers.hireline import HirelineScraper
-    from src.scrapers.honeypot import HoneypotScraper
-    from src.scrapers.infojobs import InfoJobsScraper
 
     scrapers_map = {
         "remotive": RemotiveScraper,
         "wwr": WeWorkRemotelyScraper,
-        "linkedin": LinkedInScraper,
         "computrabajo": ComputrabajoScraper,
-        "glassdoor": GlassdoorScraper,
         "occ": OCCScraper,
         "remoteok": RemoteOKScraper,
         "himalayas": HimalayasScraper,
-        # Tier 1 – agregados
-        "torre": TorreScraper,
         "getonboard": GetOnBoardScraper,
-        "wellfound": WellfoundScraper,
-        # Tier 2 – agregados
+        "jobicy": JobicyScraper,
         "hireline": HirelineScraper,
-        "honeypot": HoneypotScraper,
-        "infojobs": InfoJobsScraper,
     }
 
     DEFAULT_SOURCES = [
-        "remotive", "wwr", "linkedin", "computrabajo", "occ",
-        "remoteok", "himalayas",
-        "torre", "getonboard", "wellfound",
-        "hireline", "honeypot", "infojobs",
+        "remotive", "wwr", "computrabajo", "occ",
+        "remoteok", "himalayas", "getonboard", "jobicy",
+        "hireline",
     ]
 
     if sources == "all":

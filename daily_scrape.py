@@ -15,8 +15,8 @@ from src.config import load_config
 from src.email_sender import send_self_copy
 
 SOURCES = [
-    "remotive", "wwr", "linkedin", "computrabajo", "occ",
-    "remoteok", "himalayas", "getonboard", "jobicy", "glassdoor",
+    "remotive", "wwr", "computrabajo", "occ",
+    "remoteok", "himalayas", "getonboard", "jobicy",
 ]
 
 
@@ -30,26 +30,22 @@ def run_scrape(cfg):
 
     from src.scrapers.remotive import RemotiveScraper
     from src.scrapers.weworkremotely import WeWorkRemotelyScraper
-    from src.scrapers.linkedin import LinkedInScraper
     from src.scrapers.computrabajo import ComputrabajoScraper
     from src.scrapers.occ import OCCScraper
     from src.scrapers.remoteok import RemoteOKScraper
     from src.scrapers.himalayas import HimalayasScraper
     from src.scrapers.getonboard import GetOnBoardScraper
     from src.scrapers.jobicy import JobicyScraper
-    from src.scrapers.glassdoor import GlassdoorScraper
 
     scrapers_map = {
         "remotive":    RemotiveScraper,
         "wwr":         WeWorkRemotelyScraper,
-        "linkedin":    LinkedInScraper,
         "computrabajo": ComputrabajoScraper,
         "occ":         OCCScraper,
         "remoteok":    RemoteOKScraper,
         "himalayas":   HimalayasScraper,
         "getonboard":  GetOnBoardScraper,
         "jobicy":      JobicyScraper,
-        "glassdoor":   GlassdoorScraper,
     }
 
     new_jobs = []
@@ -61,9 +57,7 @@ def run_scrape(cfg):
             continue
 
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Scraping {name}...")
-        # Glassdoor es lento (Playwright por keyword); limitar a keywords principales
-        kw = ["sysadmin", "systems administrator", "linux administrator", "infrastructure engineer"] if name == "glassdoor" else keywords
-        scraper = ScraperClass(keywords=kw, locations=locations)
+        scraper = ScraperClass(keywords=keywords, locations=locations)
 
         try:
             jobs = scraper.scrape()
