@@ -171,9 +171,8 @@ with tab_scrape:
     st.title("Scrape de vacantes")
 
     all_sources = [
-        "remotive", "wwr", "linkedin", "computrabajo", "occ",
-        "remoteok", "himalayas", "torre", "getonboard", "wellfound",
-        "hireline", "honeypot", "infojobs", "jobicy",
+        "remotive", "wwr", "computrabajo", "occ",
+        "remoteok", "himalayas", "getonboard", "hireline", "jobicy",
     ]
 
     selected_sources = st.multiselect(
